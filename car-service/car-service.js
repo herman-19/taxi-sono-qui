@@ -6,10 +6,10 @@ const port = process.argv.slice(2)[0];
 app.use(bodyParser.json());
 
 const taxis = [
-  { id: 1, zip: "60606", name: "Yellow Cab", offduty: false, occupied: false },
-  { id: 2, zip: "60640", name: "Flash Cab", offduty: false, occupied: false },
-  { id: 3, zip: "60666", name: "O'Hare Taxi", offduty: false, occupied: false },
-  { id: 4, zip: "60654", name: "City Taxi", offduty: false, occupied: false },
+  { id: 1, zip: "60606", location: "West Loop Gate", name: "Yellow Cab", offduty: false, occupied: false },
+  { id: 2, zip: "60640", location: "Edgewater", name: "Flash Cab", offduty: false, occupied: false },
+  { id: 3, zip: "60666", location: "O'Hare", name: "O'Hare Taxi", offduty: false, occupied: false },
+  { id: 4, zip: "60654", location: "River North", name: "City Taxi", offduty: false, occupied: false },
 ];
 
 app.get("/taxis", (req, res) => {
