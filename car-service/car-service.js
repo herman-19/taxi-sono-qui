@@ -5,13 +5,13 @@ const bodyParser = require("body-parser");
 const port = process.argv.slice(2)[0];
 app.use(bodyParser.json())
 
-const fleetService = "http://localhost:5001";
+const fleetService = "http://localhost:5000";
 
 const taxis = [
-  { id: 1, zip: "60606", assignedOrder: 0},
-  { id: 2, zip: "60640", assignedOrder: 0},
-  { id: 3, zip: "60666", assignedOrder: 0},
-  { id: 4, zip: "60654", assignedOrder: 0}
+  { id: 1, zip: "60606"},
+  { id: 2, zip: "60640"},
+  { id: 3, zip: "60666"},
+  { id: 4, zip: "60654"}
 ];
 
 // @route   GET /taxis
@@ -72,6 +72,10 @@ app.post("/taxi/**", async (req, res) => {
   }
 });
 
+require("../eureka/eureka-registry-helper").registerWithEureka(
+  "car-service",
+  port
+);
 app.listen(port);
 console.log(`Taxi car service listening on port ${port}...`);
 

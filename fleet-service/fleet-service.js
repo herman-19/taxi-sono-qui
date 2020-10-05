@@ -106,5 +106,9 @@ app.post("/assignment", (req, res) => {
     }
   });
 
+require("../eureka/eureka-registry-helper").registerWithEureka(
+  "fleet-service",
+  port
+);
 app.listen(port);
 console.log(`Taxi fleet service listening on port ${port}...`);

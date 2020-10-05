@@ -5,7 +5,7 @@ const port = process.argv.slice(2)[0];
 const axios = require('axios');
 app.use(bodyParser.json());
 
-const fleetService = "http://localhost:5001";
+const fleetService = "http://localhost:5000";
 
 const taxiOrders = [
     // { id: 1, zip: "60077", assignedTaxi: 0},
@@ -61,7 +61,7 @@ app.post("/order/", async (req, res) => {
                     .header({ Location: `http://localhost:${port}/order/${orderCount}` })
                     .send(newOrder);
                 }
-            } 
+            }
         } catch (error) {
             // Error handling.
             taxiOrders.push(newOrder);
@@ -73,5 +73,9 @@ app.post("/order/", async (req, res) => {
     }
 });
 
+require("../eureka/eureka-registry-helper").registerWithEureka(
+  "customer-order-ui-service",
+  port
+);
 app.listen(port);
 console.log(`Customer order and UI service listening on port ${port}...`);

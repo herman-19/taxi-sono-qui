@@ -1,3 +1,4 @@
 car-service/node_modules
 fleet-service/node_modules
 customer-order-ui-service/node_modules
+eureka/node_modules
