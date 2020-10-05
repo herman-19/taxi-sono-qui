@@ -8,10 +8,10 @@ app.use(bodyParser.json())
 const fleetService = "http://localhost:5001";
 
 const taxis = [
-  { id: 1, zip: "60606"},
-  { id: 2, zip: "60640"},
-  { id: 3, zip: "60666"},
-  { id: 4, zip: "60654"}
+  { id: 1, zip: "60606", assignedOrder: 0},
+  { id: 2, zip: "60640", assignedOrder: 0},
+  { id: 3, zip: "60666", assignedOrder: 0},
+  { id: 4, zip: "60654", assignedOrder: 0}
 ];
 
 // @route   GET /taxis
@@ -74,3 +74,8 @@ app.post("/taxi/**", async (req, res) => {
 
 app.listen(port);
 console.log(`Taxi car service listening on port ${port}...`);
+
+// Test data-Send taxi locations to fleet-service.
+taxis.forEach( t => {
+  axios.post(`${fleetService}/taxi/`, { zip: t.zip }, { headers: {'Content-Type': 'application/json'}});
+});
