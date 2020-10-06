@@ -5,7 +5,7 @@ const port = process.argv.slice(2)[0];
 const axios = require('axios');
 app.use(bodyParser.json());
 
-const fleetService = "http://localhost:5000";
+const fleetService = 'http://localhost:8080/fleet-service';
 
 const taxiOrders = [
     // { id: 1, zip: "60077", assignedTaxi: 0},

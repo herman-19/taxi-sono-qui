@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const port = process.argv.slice(2)[0];
 app.use(bodyParser.json())
 
-const fleetService = "http://localhost:5000";
+const fleetService = 'http://localhost:8080/fleet-service';
 
 const taxis = [
   { id: 1, zip: "60606"},
