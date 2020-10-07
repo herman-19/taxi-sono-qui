@@ -2,66 +2,82 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const port = process.argv.slice(2)[0];
+const connectDB = require("./config/db");
+const Taxi = require("./models/Taxi");
 app.use(bodyParser.json());
-
-const fleet  = [
-    // { id: 1, zip: "60606", busy: false},
-    // { id: 2, zip: "60619", busy: false}
-];
-let taxiId = fleet.length;
 
 // @route   GET /fleet
 // @desc    Get fleet of taxis.
 // @access  Public
-app.get("/fleet", (req, res) => {
-    console.log("Returning taxi fleet...");
-    console.log(fleet);
-    res.send(fleet);
+app.get("/fleet", async (req, res) => {
+    console.log("Returning fleet...");
+    try {
+        const fleet = await Taxi.find({});
+        console.log(fleet);
+        res.json(fleet);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
 });
 
 // @route   POST /taxi
 // @desc    Create a taxi to add to fleet.
 //          POST because server sets identifier.
 // @access  Public
-app.post("/taxi/", (req, res) => {
+app.post("/taxi/", async (req, res) => {
     const zip  = req.body["zip"];
     if (!zip) {
         console.log("Failed to add new taxi.");
         res.status(404).send("Please provide zip.");
     } else {
-        const newTaxi = {
-            id: ++taxiId,
+        const newTaxi = new Taxi({
             zip,
             busy: false
-        };
+        });
 
-        fleet.push(newTaxi);
-        console.log(`Added new taxi: ${JSON.stringify(newTaxi)}`);
+        await newTaxi.save();
+        console.log(`Added new taxi: ${newTaxi}`);
         res.status(202)
-        .header({ Location: `http://localhost:${port}/taxi/${taxiId}` })
-        .send(newTaxi);
+        .header({ Location: `http://localhost:${port}/taxi/${newTaxi._id}` })
+        .json(newTaxi);
     }
 });
 
 // @route   POST /taxi/:id
 // @desc    Update a fleet taxi's location.
 // @access  Public
-app.post("/taxi/:id", (req, res) => {
-    const taxiId = parseInt(req.params.id);
-    const foundTaxi = fleet.find(subject => subject.id === taxiId);
-    if (foundTaxi) {
-        for (let attribute in foundTaxi) {
-            if (req.body[attribute]) {
-              foundTaxi[attribute] = req.body[attribute];
-              console.log(
-                `Updated ${attribute} to ${req.body[attribute]} in taxi: ${taxiId}.`
-              );
-            }
+app.post("/taxi/:id", async (req, res) => {
+    try {
+        const taxiId = req.params.id;
+        const { zip, busy } = req.body;
+        const fields = {};
+
+        if (zip) fields.zip = zip;
+        if (busy) fields.busy = busy;
+
+        if ((!zip) && (!busy)) {
+            res.status(400).json({ msg: "Please provide fields."});
+            return;
         }
-        res.status(202).send();
-    } else {
-        console.log("Taxi order not found.");
-        res.status(404).send();
+
+        let foundTaxi = await Taxi.findOne({ _id: taxiId });
+        
+        if (foundTaxi) {
+            // Update
+            foundTaxi = await Taxi.findOneAndUpdate(
+                { _id: taxiId },
+                { $set : fields },
+                { new: true }
+            );
+            res.status(202).send(foundTaxi);
+        } else {
+            console.log("Taxi not found.");
+            res.status(400).json({ msg: "Taxi not found."});
+        }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error.");
     }
 });
 
@@ -69,42 +85,40 @@ app.post("/taxi/:id", (req, res) => {
 // @desc    Determine if taxi from fleet can be
 //          allocated to order.
 // @access  Public
-app.post("/assignment", (req, res) => {
-    const orderId  = req.body["id"];
-    const orderZip = req.body["zip"];
+app.post("/assignment", async (req, res) => {
+    const { id, zip } = req.body;
+    console.log(`Assignment request: Order id:${id}, zip:${zip}`);
 
-    console.log(`Assignment request: id:${orderId}, zip:${orderZip}`);
-
-    if (!orderId || !orderZip)
+    if (!id || !zip)
     {
         console.log("Failed to service order.");
-        res.status(404).send("Please provide order id and zip.");
+        res.status(400).send("Please provide order id and zip.");
     } else {
         // From fleet, find taxi that is not busy and 
         // that is closest to order's zip.
         // TODO: Do actual calculations. For now, allocate first non-busy taxi.
-        let  allocatedTaxi;
-        for (let i in fleet) {
-            let taxi = fleet[i];
-            if (!taxi.busy) {
-                taxi.busy = true;
-                allocatedTaxi = taxi;
-                break;
-            }
-        }
+        let  allocatedTaxi = await Taxi.findOne( { busy: false });
 
         if (allocatedTaxi) {
             // Return success to order-ui-service.
-            console.log(`Taxi id: ${allocatedTaxi.id} is now busy.`);
-            res.status(202).send(JSON.stringify(allocatedTaxi));
+            allocatedTaxi = await Taxi.findOneAndUpdate(
+                { _id: allocatedTaxi._id },
+                { $set : { busy: true }},
+                { new: true }
+            );
+            console.log(`Taxi id: ${allocatedTaxi._id} is now busy.`);
+            res.status(202).json(allocatedTaxi);
 
         } else {
             // Return failed to order-ui-service.
             console.log("No taxi available.");
-            res.status(202).send();
+            res.status(202).json({ msg: "No taxi available."});
         }
     }
   });
+
+// Connect database.
+connectDB();
 
 require("../eureka/eureka-registry-helper").registerWithEureka(
   "fleet-service",

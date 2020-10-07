@@ -1,4 +1,6 @@
 car-service/node_modules
 fleet-service/node_modules
+fleet-service/config/default.json
 customer-order-ui-service/node_modules
+customer-order-ui-service/config/default.json
 eureka/node_modules
